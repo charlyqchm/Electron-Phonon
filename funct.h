@@ -49,7 +49,14 @@ double Fop_j(unsigned int jj, unsigned int aa, unsigned int bb,
 
 double dirac_delta(double Ea, double Eb, double wj, double sigma);
 
+void eliminating_negligible_terms(unsigned int natom, vector<Atom>& at_list,
+                                  vector<int>& tri_index,
+                                  double sigma, double c_coup,
+                                  vector<double>& eigen_E,
+                                  vector<double>& coef);
+
 void eta_lambda_calc_phon_evol(unsigned int natom, vector<Atom>& at_list,
+                               vector<int>& tri_index,
                                double sigma, double c_coup,
                                vector<double>& eta_term,
                                vector<double>& lambda_term,
@@ -84,15 +91,16 @@ void apply_Driving_term(vector<complex<double> >& rho,
                         double& currentA, double& currentB);
 
 void electron_phonon_correction(unsigned int natom, vector<Atom>& at_list,
-                               double sigma, double c_coup,
-                               vector<double>& eta_term,
-                               vector<double>& lambda_term,
-                               vector<double>& eigen_E,
-                               vector<double>& phon_pop,
-                               vector<double>& Dphon_pop,
-                               vector<double>& coef,
-                               vector<double>& coefT,
-                               vector<complex<double> >& rho,
-                               vector<complex<double> >& Drho);
+                                vector<int>& tri_index,
+                                double sigma, double c_coup,
+                                vector<double>& eta_term,
+                                vector<double>& lambda_term,
+                                vector<double>& eigen_E,
+                                vector<double>& phon_pop,
+                                vector<double>& Dphon_pop,
+                                vector<double>& coef,
+                                vector<double>& coefT,
+                                vector<complex<double> >& rho,
+                                vector<complex<double> >& Drho);
 
 #endif

@@ -250,7 +250,7 @@ double dirac_delta(double Ea, double Eb, double wj, double sigma){
    double norm;
    double arg;
    double dir_del;
-   const double pi = 3.1415927e0;
+   const double pi = 3.141592653589793;
 
    norm = 1.0 / sqrt(2.0 * pi * pow(sigma, 2.0));
    arg  = -pow((Ea - Eb + wj), 2.0)/(2.0 * pow(sigma, 2.0));
@@ -261,7 +261,38 @@ double dirac_delta(double Ea, double Eb, double wj, double sigma){
 }
 //##############################################################################
 
+void eliminating_negligible_terms(unsigned int natom, vector<Atom>& at_list,
+                                  vector<int>& tri_index,
+                                  double sigma, double c_coup,
+                                  vector<double>& eigen_E,
+                                  vector<double>& coef){
+   int nat2 = natom*natom;
+
+   for (int ii=0; ii<natom; ii++){
+   for (int jj=0; jj<natom; jj++){
+   for (int kk=0; kk<natom; kk++){
+      if(at_list[kk].GetMove()){
+         double aux1, exp1, exp2;
+         double Ea   = eigen_E[ii];
+         double Eb   = eigen_E[jj];
+         double wj   = at_list[kk].GetFreq();
+         aux1 = pow(c_coup, 2.0) * Fop_j(kk, ii, jj, natom, coef);
+         exp1 = dirac_delta(Ea, Eb, wj, sigma);
+         exp2 = dirac_delta(Ea, Eb, -wj, sigma);
+         bool acceptable;
+         acceptable = (aux1*exp1 > 1.0e-6) || (aux1*exp2 > 1.0e-6);
+         if (acceptable){
+            tri_index.push_back(ii+jj*natom+kk*nat2);
+         }
+      }
+   }
+   }
+   }
+}
+
+//##############################################################################
 void eta_lambda_calc_phon_evol(unsigned int natom, vector<Atom>& at_list,
+                               vector<int>& tri_index,
                                double sigma, double c_coup,
                                vector<double>& eta_term,
                                vector<double>& lambda_term,
@@ -272,6 +303,9 @@ void eta_lambda_calc_phon_evol(unsigned int natom, vector<Atom>& at_list,
                                vector<complex<double> >& rho){
 
 
+
+   int n_iter = tri_index.size();
+   int nat2   = natom * natom;
    const double pi = 3.141592653589793;
 
    for (int ii=0; ii < natom; ii++){
@@ -280,34 +314,33 @@ void eta_lambda_calc_phon_evol(unsigned int natom, vector<Atom>& at_list,
       Dphon_pop[ii]   = 0.0;
    }
 
-   for (int kk=0; kk < natom; kk++){
-      if (at_list[kk].GetMove()){
-         for(int ii=0; ii < natom; ii++){
-         for(int jj=0; jj < natom; jj++){
-            if (ii != jj){
-               double aux1, exp1, exp2;
-               double Ea   = eigen_E[ii];
-               double Eb   = eigen_E[jj];
-               double wj   = at_list[kk].GetFreq();
-               double fa   = real(rho[ii+ii*natom]);
-               double fb   = real(rho[jj+jj*natom]);
-               double Nj   = phon_pop[kk];
-               double mass = at_list[kk].GetMass();
+   for (int indx=0; indx < n_iter; indx++){
 
-               aux1 = pow(c_coup, 2.0) * pi *
-                      Fop_j(kk, ii, jj, natom, coef)/(mass * wj);
-               exp1 = dirac_delta(Ea, Eb, wj, sigma);
-               exp2 = dirac_delta(Ea, Eb, -wj, sigma);
+      int kk = int(tri_index[indx]/nat2);
+      int jj = int((tri_index[indx]-kk*nat2)/natom);
+      int ii = int(tri_index[indx]-jj*natom-kk*nat2);
 
-               eta_term[ii] += aux1 * ((Nj + fb) * exp1 +
-                               (Nj + 1.0 - fb) * exp2);
-               lambda_term[ii] += aux1 * fb * ((Nj + 1.0) * exp1 + Nj * exp2);
-               Dphon_pop[kk] += aux1 * (-fa * (1.0 - fb)* Nj +
-                                   fb * (1.0 - fa) * (Nj + 1.0)) * (Eb-Ea)/wj
-                                   * exp1;
-            }
-         }
-         }
+      if (ii != jj){
+         double aux1, exp1, exp2;
+         double Ea   = eigen_E[ii];
+         double Eb   = eigen_E[jj];
+         double wj   = at_list[kk].GetFreq();
+         double fa   = real(rho[ii+ii*natom]);
+         double fb   = real(rho[jj+jj*natom]);
+         double Nj   = phon_pop[kk];
+         double mass = at_list[kk].GetMass();
+
+         aux1 = pow(c_coup, 2.0) * pi *
+                Fop_j(kk, ii, jj, natom, coef)/(mass * wj);
+         exp1 = dirac_delta(Ea, Eb, wj, sigma);
+         exp2 = dirac_delta(Ea, Eb, -wj, sigma);
+
+         eta_term[ii] += aux1 * ((Nj + fb) * exp1 +
+                         (Nj + 1.0 - fb) * exp2);
+         lambda_term[ii] += aux1 * fb * ((Nj + 1.0) * exp1 + Nj * exp2);
+         Dphon_pop[kk] += aux1 * (-fa * (1.0 - fb)* Nj +
+                             fb * (1.0 - fa) * (Nj + 1.0)) * (Eb-Ea)/wj
+                             * exp1;
       }
    }
 }
@@ -494,16 +527,17 @@ void apply_Driving_term(vector<complex<double> >& rho,
 
 //##############################################################################
 void electron_phonon_correction(unsigned int natom, vector<Atom>& at_list,
-                               double sigma, double c_coup,
-                               vector<double>& eta_term,
-                               vector<double>& lambda_term,
-                               vector<double>& eigen_E,
-                               vector<double>& phon_pop,
-                               vector<double>& Dphon_pop,
-                               vector<double>& coef,
-                               vector<double>& coefT,
-                               vector<complex<double> >& rho,
-                               vector<complex<double> >& Drho){
+                                vector<int>& tri_index,
+                                double sigma, double c_coup,
+                                vector<double>& eta_term,
+                                vector<double>& lambda_term,
+                                vector<double>& eigen_E,
+                                vector<double>& phon_pop,
+                                vector<double>& Dphon_pop,
+                                vector<double>& coef,
+                                vector<double>& coefT,
+                                vector<complex<double> >& rho,
+                                vector<complex<double> >& Drho){
 
    unsigned int    nat2 = natom * natom;
    vector<complex<double> > aux_mat1(nat2, 0.0);
@@ -514,7 +548,7 @@ void electron_phonon_correction(unsigned int natom, vector<Atom>& at_list,
    matmul(rho, coef, aux_mat1, natom);
    matmul(coefT, aux_mat1, rho_OM, natom);
 
-   eta_lambda_calc_phon_evol(natom, at_list, sigma, c_coup, eta_term,
+   eta_lambda_calc_phon_evol(natom, at_list, tri_index, sigma, c_coup, eta_term,
                              lambda_term, eigen_E, phon_pop, Dphon_pop,
                              coef, rho_OM);
 

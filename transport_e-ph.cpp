@@ -10,6 +10,7 @@ int main(){
    unsigned int          output_tot = 15;
    unsigned int          nat2;
    vector<int>           move_at;
+   vector<int>           tri_index;
    int                   tot_time;
    int                   print_t;
    double                delta_t;
@@ -48,7 +49,7 @@ int main(){
    vector<double>        aux_array1(natom,0.0);
    vector<double>        eta_term(natom,0.0);
    vector<double>        lambda_term(natom,0.0);
-   const double          pi = 3.1415927e0;
+   const double          pi = 3.141592653589793;
    vector < complex<double> > rho(nat2,0.0);
    vector < complex<double> > rho_OM(nat2,0.0);
    vector < complex<double> > rho_new(nat2,0.0);
@@ -123,8 +124,13 @@ int main(){
 
    write_output(natom, n_bias, fock, rho, rho_OM, eigen_E, 0.0, currentA,
                 currentB, at_list, ph_pop, outfile);
-// Time propagation, using 2nd order runge kutta integrator.
 
+   eliminating_negligible_terms(natom, at_list, tri_index, sigma, c_coup,
+                                eigen_E, eigen_coef);
+
+//##############################################################################
+// Time propagation, using 2nd order runge kutta integrator.                   #
+//##############################################################################
    for (int tt = 1; tt <= tot_time; tt++){
 
       dr_aux = d_rate;
@@ -135,9 +141,10 @@ int main(){
       }
       apply_potential(fock, at_list, V_aux, n_bias, natom);
       LVN_propagation(natom, fock, rho, Drho);
-      // electron_phonon_correction(natom, at_list, sigma, c_coup, eta_term,
-      //                            lambda_term, eigen_E, ph_pop, Dphon_pop,
-      //                            eigen_coef, eigen_coefT, rho, Drho);
+      electron_phonon_correction(natom, at_list, tri_index, sigma, c_coup,
+                                    eta_term, lambda_term, eigen_E, ph_pop,
+                                    Dphon_pop, eigen_coef, eigen_coefT, rho,
+                                    Drho);
 
       for(int ii=0; ii < nat2; ii++){
          aux_mat1[ii] = rho[ii] + 0.5 * Drho[ii] * delta_t;
@@ -154,13 +161,14 @@ int main(){
 
       apply_potential(fock, at_list, V_aux, n_bias, natom);
       LVN_propagation(natom, fock, aux_mat1, Drho);
-      // electron_phonon_correction(natom, at_list, sigma, c_coup, eta_term,
-      //                            lambda_term, eigen_E, aux_array1, Dphon_pop,
-      //                            eigen_coef, eigen_coefT, aux_mat1, Drho);
+      electron_phonon_correction(natom, at_list, tri_index, sigma, c_coup,
+                                    eta_term, lambda_term, eigen_E, aux_array1,
+                                    Dphon_pop, eigen_coef, eigen_coefT,
+                                    aux_mat1, Drho);
 
 
-      apply_Driving_term(rho, rho_ref, Drho, dr_aux, natom, n_bias,
-                         currentA, currentB);
+      // apply_Driving_term(rho, rho_ref, Drho, dr_aux, natom, n_bias,
+      //                    currentA, currentB);
 
       for(int ii=0; ii < nat2; ii++){
          rho_new[ii] = rho[ii] + Drho[ii] * delta_t;
