@@ -5,8 +5,8 @@
 #include <fstream>
 #include <stdlib.h>
 #include <math.h>
-#include <omp.h>
 #include "atom.h"
+#include "matmul_cublas.h"
 
 extern "C" { extern
    void dsyev_( char* jobz, char* uplo, int* n, double* a, int* lda,

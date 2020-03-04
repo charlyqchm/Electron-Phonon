@@ -1,13 +1,16 @@
-CC := icc
-CFLAGS := -llapack -O3
+CC := nvcc
+CFLAGS := -llapack -O3 -lcublas --gpu-architecture=sm_50
 
-objects 	  = atom.o transport_e-ph_sub.o transport_e-ph.o
+objects 	  = atom.o transport_e-ph_sub.o transport_e-ph.o matmul_cublas.o
 executable = myprogram
 
 $(executable): $(objects)
 			$(CC) -o $@ $^ ${CFLAGS}
 
 atom.o: atom.cpp atom.h
+			$(CC) -o $@ -c $< ${CFLAGS}
+
+matmul_cublas.o: matmul_cublas.cu matmul_cublas.h
 			$(CC) -o $@ -c $< ${CFLAGS}
 
 transport_e-ph_sub.o: transport_e-ph_sub.cpp funct.h

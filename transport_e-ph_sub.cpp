@@ -19,7 +19,7 @@ void init_output(ofstream* outfile){
       outfile[14].open("ref_charge.out");
 }
 //##############################################################################
-void read_input(unsigned int& natom, unsigned int& n_bias, unsigned int& n_move,
+void read_input(UNINT& natom, UNINT& n_bias, UNINT& n_move,
                 int& tot_time, int& print_t, double& delta_t, double& beta,
                 double& elec_temp, double& phon_temp, double& Vbias,
                 double& c_coup, double& sigma, double& d_rate, ifstream& inputf,
@@ -59,7 +59,7 @@ void read_input(unsigned int& natom, unsigned int& n_bias, unsigned int& n_move,
 }
 
 //##############################################################################
-void write_output(unsigned int natom, unsigned int n_bias,vector<double>& fock,
+void write_output(UNINT natom, UNINT n_bias,vector<double>& fock,
                   vector<complex<double> >& rho_AT, vector<complex<double> >& rho_OM,
                   vector<double>& eigen_E, double time, double& currentA,
                   double& currentB, vector<Atom>& at_list, vector<double>& ph_pop,
@@ -72,7 +72,7 @@ void write_output(unsigned int natom, unsigned int n_bias,vector<double>& fock,
       }
    }
 
-   unsigned int nat2 = natom * natom;
+   UNINT nat2 = natom * natom;
    int    n_mol      = natom - 2*n_bias;
    double tot_elec_E = 0.0;
    double tot_elec   = 0.0;
@@ -121,8 +121,8 @@ void write_output(unsigned int natom, unsigned int n_bias,vector<double>& fock,
 
 //##############################################################################
 
-void atom_creator(vector<Atom>& at_list, unsigned int n_bias,
-                  unsigned int natom, unsigned int n_move,
+void atom_creator(vector<Atom>& at_list, UNINT n_bias,
+                  UNINT natom, UNINT n_move,
                   vector<int>& move_at){
 
    double mass  = 1822.8885*0.5;//23244.3;
@@ -160,12 +160,12 @@ void atom_creator(vector<Atom>& at_list, unsigned int n_bias,
 //##############################################################################
 
 void hamiltonian_creator(vector<double>& fock, double beta,
-                         vector<Atom>& at_list, unsigned int natom,
-                         unsigned int n_bias){
+                         vector<Atom>& at_list, UNINT natom,
+                         UNINT n_bias){
 
    double gamma = 0.012249775;//-0.0183747;
 
-   unsigned int nat2 = natom * natom;
+   UNINT nat2 = natom * natom;
    for(int ii=0; ii < nat2; ii++){fock[ii]=0.0e0;}
 
    for(int ii=0; ii < natom; ii++){
@@ -187,11 +187,11 @@ void hamiltonian_creator(vector<double>& fock, double beta,
 //##############################################################################
 
 void eigenval_elec_calc(vector<double>& mat, vector<double>& eigenval,
-                        vector<double>& coef, unsigned int ntotal){
+                        vector<double>& coef, UNINT ntotal){
 
    int          info, lwork;
    int          dim = (int) ntotal;
-   unsigned int n2  = ntotal * ntotal;
+   UNINT n2  = ntotal * ntotal;
    double       wkopt;
    double*      work;
    char         jobz='V';
@@ -210,7 +210,7 @@ void eigenval_elec_calc(vector<double>& mat, vector<double>& eigenval,
 }
 //##############################################################################
 void warm_up_elec(vector<complex<double> >& rho, vector<double>& eigen_E,
-                  unsigned int natom, double elec_temp){
+                  UNINT natom, double elec_temp){
 
    for (int ii=0; ii < natom; ii++){
       rho[ii+ii*natom] = 1.0e0/(exp(eigen_E[ii]/elec_temp) + 1.0e0);
@@ -218,7 +218,7 @@ void warm_up_elec(vector<complex<double> >& rho, vector<double>& eigen_E,
 }
 //##############################################################################
 void warm_up_ph(vector<double>& ph_pop, vector<Atom>& at_list, double ph_temp,
-                unsigned int natom){
+                UNINT natom){
 
    for (int ii=0; ii < natom; ii++){
       if (at_list[ii].GetMove()){
@@ -227,8 +227,8 @@ void warm_up_ph(vector<double>& ph_pop, vector<Atom>& at_list, double ph_temp,
    }
 }
 //##############################################################################
-double Fop_j(unsigned int jj, unsigned int aa, unsigned int bb,
-              unsigned int natom, vector<double>& coef){
+double Fop_j(UNINT jj, UNINT aa, UNINT bb,
+              UNINT natom, vector<double>& coef){
 
    double l_term;
    double r_term;
@@ -261,7 +261,7 @@ double dirac_delta(double Ea, double Eb, double wj, double sigma){
 }
 //##############################################################################
 
-void eliminating_negligible_terms(unsigned int natom, vector<Atom>& at_list,
+void eliminating_negligible_terms(UNINT natom, vector<Atom>& at_list,
                                   vector<int>& tri_index,
                                   double sigma, double c_coup,
                                   vector<double>& eigen_E,
@@ -291,7 +291,7 @@ void eliminating_negligible_terms(unsigned int natom, vector<Atom>& at_list,
 }
 
 //##############################################################################
-void eta_lambda_calc_phon_evol(unsigned int natom, vector<Atom>& at_list,
+void eta_lambda_calc_phon_evol(UNINT natom, vector<Atom>& at_list,
                                vector<int>& tri_index,
                                double sigma, double c_coup,
                                vector<double>& eta_term,
@@ -346,58 +346,62 @@ void eta_lambda_calc_phon_evol(unsigned int natom, vector<Atom>& at_list,
 }
 //##############################################################################
 void matmul(vector<double>& matA, vector<double>& matB, vector<double>& matC,
-            unsigned int dim){
+            UNINT dim){
 
-   int ii,jj,kk;
-   int dim2 = dim * dim;
+   int            ii, jj, kk;
+   int            dim2 = dim * dim;
+   vector<double> aux_mat(dim2, 0.0);
 
    for(ii=0; ii < dim2; ii++){matC[ii] = 0.0;}
+   for(ii=0; ii < dim; ii++){
+   for(jj=0; jj < dim; jj++){
+      aux_mat[ii+jj*dim] = matA[jj+ii*dim];
+   }
+   }
 
-   for(int ii=0; ii < dim; ii++){
-   for(int jj=0; jj < dim; jj++){
-   for(int kk=0; kk < dim; kk++){
-      matC[ii+jj*dim] += matA[ii+kk*dim] * matB[kk+jj*dim];
+   for(ii=0; ii < dim; ii++){
+   for(jj=0; jj < dim; jj++){
+   for(kk=0; kk < dim; kk++){
+      matC[ii+jj*dim] += matA[kk+ii*dim] * matB[kk+jj*dim];
    }
    }
    }
 }
 
 void matmul(vector<complex<double> >& matA, vector<double>& matB,
-            vector<complex<double> >& matC, unsigned int dim){
+            vector<complex<double> >& matC, UNINT dim){
 
-   int ii,jj,kk;
-   int dim2 = dim * dim;
+   int            ii;
+   int                        dim2 = dim * dim;
+   vector< complex<double> >  aux_mat(dim2, 0.0);
 
-   for(ii=0; ii < dim2; ii++){matC[ii] = 0.0;}
+   for(ii=0; ii < dim2; ii++){
+      matC[ii] = 0.0;
+      aux_mat[ii]=matB[ii];
+   }
 
-   for(int ii=0; ii < dim; ii++){
-   for(int jj=0; jj < dim; jj++){
-   for(int kk=0; kk < dim; kk++){
-      matC[ii+jj*dim] += matA[ii+kk*dim] * matB[kk+jj*dim];
-   }
-   }
-   }
+   matcublas(& *matA.begin(), & *aux_mat.begin(), & *matC.begin(), dim);
+
 }
 
 void matmul(vector<double>& matA, vector<complex<double> >& matB,
-            vector<complex<double> >& matC, unsigned int dim){
+            vector<complex<double> >& matC, UNINT dim){
 
-   int ii,jj,kk;
+   int ii;
    int dim2 = dim * dim;
+   vector< complex<double> >  aux_mat(dim2, 0.0);
 
-   for(ii=0; ii < dim2; ii++){matC[ii] = 0.0;}
+   for(ii=0; ii < dim2; ii++){
+      matC[ii] = 0.0;
+      aux_mat[ii]=matA[ii];
+   }
 
-   for(int ii=0; ii < dim; ii++){
-   for(int jj=0; jj < dim; jj++){
-   for(int kk=0; kk < dim; kk++){
-      matC[ii+jj*dim] += matA[ii+kk*dim] * matB[kk+jj*dim];
-   }
-   }
-   }
+   matcublas(& *aux_mat.begin(), & *matB.begin(), & *matC.begin(), dim);
+
 }
 
 void matmul_sparse(vector<double>& matA, vector<complex<double> >& matB,
-                   vector<complex<double> >& matC, unsigned int dim){
+                   vector<complex<double> >& matC, UNINT dim){
 
    for(int jj=0; jj < dim; jj++){
    for(int ii=0; ii < dim; ii++){
@@ -422,7 +426,7 @@ void matmul_sparse(vector<double>& matA, vector<complex<double> >& matB,
 }
 
 void matmul_sparse(vector<complex<double> >& matA, vector<double>& matB,
-                   vector<complex<double> >& matC, unsigned int dim){
+                   vector<complex<double> >& matC, UNINT dim){
 
    for(int jj=0; jj < dim; jj++){
    for(int ii=0; ii < dim; ii++){
@@ -447,11 +451,11 @@ void matmul_sparse(vector<complex<double> >& matA, vector<double>& matB,
 }
 //##############################################################################
 
-void LVN_propagation(unsigned int natom, vector<double>& fock,
+void LVN_propagation(UNINT natom, vector<double>& fock,
                      vector<complex<double> >& rho,
                      vector<complex<double> >& Drho){
 
-   unsigned int              nat2 = natom * natom;
+   UNINT              nat2 = natom * natom;
    const complex<double>     i_cmplx (0.0, 1.0);
    vector<complex<double> >  aux1(nat2, 0.0);
    vector<complex<double> >  aux2(nat2, 0.0);
@@ -466,7 +470,7 @@ void LVN_propagation(unsigned int natom, vector<double>& fock,
 
 //##############################################################################
 void apply_potential(vector<double>& fock, vector<Atom>& at_list, double Vpot,
-                     unsigned int n_bias, unsigned int natom){
+                     UNINT n_bias, UNINT natom){
 
    for (int ii=0; ii < n_bias; ii++){
       double Ha = at_list[ii].GetHii();
@@ -480,7 +484,7 @@ void apply_potential(vector<double>& fock, vector<Atom>& at_list, double Vpot,
 void apply_Driving_term(vector<complex<double> >& rho,
                         vector<complex<double> >& rho_ref,
                         vector<complex<double> >& Drho, double d_rate,
-                        unsigned int natom, unsigned int n_bias,
+                        UNINT natom, UNINT n_bias,
                         double& currentA, double& currentB){
 
    int n_mol  = natom - 2*n_bias;
@@ -526,7 +530,7 @@ void apply_Driving_term(vector<complex<double> >& rho,
 }
 
 //##############################################################################
-void electron_phonon_correction(unsigned int natom, vector<Atom>& at_list,
+void electron_phonon_correction(UNINT natom, vector<Atom>& at_list,
                                 vector<int>& tri_index,
                                 double sigma, double c_coup,
                                 vector<double>& eta_term,
@@ -539,7 +543,7 @@ void electron_phonon_correction(unsigned int natom, vector<Atom>& at_list,
                                 vector<complex<double> >& rho,
                                 vector<complex<double> >& Drho){
 
-   unsigned int    nat2 = natom * natom;
+   UNINT    nat2 = natom * natom;
    vector<complex<double> > aux_mat1(nat2, 0.0);
    vector<complex<double> > aux_mat2(nat2, 0.0);
    vector<complex<double> > rho_OM(nat2, 0.0);

@@ -6,6 +6,7 @@
 #include <string>
 #include <complex>
 using namespace std;
+typedef unsigned int UNINT;
 
 class Atom
 {

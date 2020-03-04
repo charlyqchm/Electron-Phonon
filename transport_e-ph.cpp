@@ -4,11 +4,11 @@
 int main(){
 
    vector<Atom>          at_list;
-   unsigned int          natom;
-   unsigned int          n_bias;
-   unsigned int          n_move;
-   unsigned int          output_tot = 15;
-   unsigned int          nat2;
+   UNINT          natom;
+   UNINT          n_bias;
+   UNINT          n_move;
+   UNINT          output_tot = 15;
+   UNINT          nat2;
    vector<int>           move_at;
    vector<int>           tri_index;
    int                   tot_time;
