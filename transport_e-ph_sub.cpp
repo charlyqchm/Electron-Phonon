@@ -17,6 +17,7 @@ void init_output(ofstream* outfile){
       outfile[12].open("phon_eigen_val.out");
       outfile[13].open("phon_pop.out");
       outfile[14].open("ref_charge.out");
+      outfile[15].open("dipole.out");
 }
 //##############################################################################
 void read_input(UNINT& natom, UNINT& n_bias, UNINT& n_move,
@@ -36,10 +37,19 @@ void read_input(UNINT& natom, UNINT& n_bias, UNINT& n_move,
     inputf>> n_bias;
     inputf>> n_move;
 
-    for (int ii=0; ii < n_move; ii++){
-      move_at.push_back(0);
-      inputf>> move_at[ii];
-   }
+    if (n_move == natom){
+       n_move = n_move - 2;
+       for (int ii=0; ii < n_move; ii++){
+          move_at.push_back(0);
+          move_at[ii] = ii+1;
+       }
+    }
+    else{
+       for (int ii=0; ii < n_move; ii++){
+          move_at.push_back(0);
+          inputf>> move_at[ii];
+       }
+    }
 
     inputf>> tot_time;
     inputf>> print_t;
@@ -81,6 +91,7 @@ void write_output(UNINT natom, UNINT n_bias,vector<double>& fock,
    double chargeA    = 0.0;
    double chargeB    = 0.0;
    double chargeM    = 0.0;
+   double dip_tot    = 0.0;
    vector<complex<double> > aux_mat1(nat2, 0.0);
    vector<complex<double> > aux_mat2(nat2, 0.0);
 
@@ -91,6 +102,7 @@ void write_output(UNINT natom, UNINT n_bias,vector<double>& fock,
       tot_elec   += real(rho_OM[ii+ii*natom]);
       tot_phon_E += (ph_pop[ii] + 0.5) * at_list[ii].GetFreq();
       tot_phon   += ph_pop[ii];
+      dip_tot    += at_list[ii].GetRCoor() * real(rho_AT[ii+ii*natom]);
    }
 
    for(int ii=0; ii<n_bias; ii++){
@@ -117,6 +129,8 @@ void write_output(UNINT natom, UNINT n_bias,vector<double>& fock,
       outfile[13]<<ph_pop[ii]<<endl;
    }
 
+   outfile[15]<< dip_tot <<endl;
+
 }
 
 //##############################################################################
@@ -127,9 +141,10 @@ void atom_creator(vector<Atom>& at_list, UNINT n_bias,
 
    double mass  = 1822.8885*0.5;//23244.3;
    double Rcoor = -3.0;
-   double w_min = 0.00367493 , w_max = 0.0110248;
+   double R_min = (Rcoor * (natom-1))/2;
+   double w_min = 0.001837466 , w_max = 0.00734987;
    double Hii   = 0.0e0;
-   double freq;
+   double freq, freq_rand;
    bool   move;
    int    jj;
 
@@ -140,7 +155,7 @@ void atom_creator(vector<Atom>& at_list, UNINT n_bias,
       double delta  =  w_max - w_min ;
       double n_rand = ((double) rand() / (RAND_MAX));
 
-      // freq = n_rand * delta + w_min ;
+      freq_rand = n_rand * delta + w_min ;
 
       move = false;
 
@@ -151,9 +166,9 @@ void atom_creator(vector<Atom>& at_list, UNINT n_bias,
       }
 
       freq = 0.0;
-      if(move){freq = 0.00734987;}//n_rand * delta + w_min;}//0.004409919;
+      if(move){freq =0.00734987;}//n_rand * delta + w_min;}//0.004409919;
 
-      Atom new_atom(ii, mass, Rcoor * (ii+1), freq, Hii, move);
+      Atom new_atom(ii, mass, Rcoor * ii - R_min, freq, Hii, move);
       at_list.push_back(new_atom);
    }
 }
@@ -530,7 +545,7 @@ void apply_Driving_term(vector<complex<double> >& rho,
 }
 
 //##############################################################################
-void electron_phonon_correction(UNINT natom, vector<Atom>& at_list,
+void electron_phonon_correction(UNINT natom, UNINT n_bias,vector<Atom>& at_list,
                                 vector<int>& tri_index,
                                 double sigma, double c_coup,
                                 vector<double>& eta_term,
@@ -563,10 +578,10 @@ void electron_phonon_correction(UNINT natom, vector<Atom>& at_list,
                                 + lambda_term[ii];
       }
       else{
-         Drho_OM[ii + jj*natom] = -0.5*(eta_term[ii]+eta_term[jj])
-                                   * rho_OM[ii + jj*natom];
-         // Drho_OM[ii + jj*natom] = -sqrt(eta_term[ii]*eta_term[jj])
-                                  // * rho_OM[ii + jj*natom];
+         // Drho_OM[ii + jj*natom] = -0.5*(eta_term[ii]+eta_term[jj])
+         //                           * rho_OM[ii + jj*natom];
+         Drho_OM[ii + jj*natom] = -sqrt(eta_term[ii]*eta_term[jj])
+                                  * rho_OM[ii + jj*natom];
       }
    }
    }
@@ -580,7 +595,24 @@ void electron_phonon_correction(UNINT natom, vector<Atom>& at_list,
    //
    // cout<<"________________"<<endl;
 
-   for (int ii=0; ii < nat2; ii++){Drho[ii] += aux_mat2[ii];}
 
+
+//   for (int ii=0; ii < nat2; ii++){
+//      Drho[ii] += aux_mat2[ii];
+//   }
+
+   int lim_max = natom - n_bias + 100;
+   int lim_min = n_bias - 100;
+   for (int jj=lim_min; jj < lim_max; jj++){
+   for (int ii=lim_min; ii < lim_max; ii++){
+      Drho[ii+jj*natom] += aux_mat2[ii+jj*natom];
+   }
+   }
+
+//   for (int ii=0; ii < n_bias; ii++){
+//      Drho[ii+ii*natom] += aux_mat2[ii+ii*natom];
+//      Drho[(ii+n_bias+lim_max)+(ii+n_bias+lim_max)*natom] += 
+//      aux_mat2[(ii+n_bias+lim_max)+(ii+n_bias+lim_max)*natom];
+//   }
 }
 //##############################################################################

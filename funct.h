@@ -90,7 +90,8 @@ void apply_Driving_term(vector<complex<double> >& rho,
                         unsigned int natom, unsigned int n_bias,
                         double& currentA, double& currentB);
 
-void electron_phonon_correction(unsigned int natom, vector<Atom>& at_list,
+void electron_phonon_correction(unsigned int natom, unsigned int n_bias,
+                                vector<Atom>& at_list,
                                 vector<int>& tri_index,
                                 double sigma, double c_coup,
                                 vector<double>& eta_term,

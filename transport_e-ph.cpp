@@ -7,7 +7,7 @@ int main(){
    UNINT          natom;
    UNINT          n_bias;
    UNINT          n_move;
-   UNINT          output_tot = 15;
+   UNINT          output_tot = 16;
    UNINT          nat2;
    vector<int>           move_at;
    vector<int>           tri_index;
@@ -64,7 +64,7 @@ int main(){
 
 //Preparing reference state/////////////////////////////////////////////////////
    hamiltonian_creator(fock, beta, at_list, natom, n_bias);
-   apply_potential(fock, at_list, Vbias, n_bias, natom);
+   // apply_potential(fock, at_list, Vbias, n_bias, natom);
    eigenval_elec_calc(fock, eigen_E, eigen_coef, natom);
    for(int jj=0; jj < natom; jj++){
    for(int ii=0; ii < natom; ii++){
@@ -90,37 +90,35 @@ int main(){
 
 //Preparing initial state///////////////////////////////////////////////////////
    hamiltonian_creator(fock, beta, at_list, natom, n_bias);
-   apply_potential(fock, at_list, Vbias, n_bias, natom);
-   eigenval_elec_calc(fock, eigen_E, eigen_coef, natom);
+   // apply_potential(fock, at_list, Vbias, n_bias, natom);
+   eigenval_elec_calc(fock, eigen_aux, aux_coef, natom);
    for(int jj=0; jj < natom; jj++){
    for(int ii=0; ii < natom; ii++){
-      eigen_coefT[jj + ii * natom] = eigen_coef[ii + jj * natom];
+      aux_coefT[jj + ii * natom] = aux_coef[ii + jj * natom];
    }
    }
-   warm_up_elec(rho_OM, eigen_E, natom, elec_temp);
+   warm_up_elec(rho_OM, eigen_aux, natom, elec_temp);
 
-   matmul(rho_OM, eigen_coefT, aux_mat1, natom);
-   matmul(eigen_coef, aux_mat1, rho, natom);
+   matmul(rho_OM, aux_coefT, aux_mat1, natom);
+   matmul(aux_coef, aux_mat1, rho, natom);
 
-//Kick voer the density matrix
-   // for (int ii = 1; ii < natom; ii++){
-   // for (int jj = 1; jj < natom; jj++){
-   //    aux1 =  cos(2*pi*d_rate*ii);
-   //    aux2 = -sin(2*pi*d_rate*ii);
-   //    exp_i=  aux1 + i_cmplx*aux2;
-   //    aux1 =  cos(2*pi*d_rate*jj);
-   //    aux2 =  sin(2*pi*d_rate*jj);
-   //    exp_j=  aux1 + i_cmplx*aux2;
-   //
-   //    if( ii != jj ){
-   //       rho[ii+jj*natom] = rho[ii+jj*natom] * exp_i * exp_j;
-   //    }
-   // }
-   // }
-
+//Kick over the density matrix
+    // for (int ii = 1; ii < natom; ii++){
+    // for (int jj = 1; jj < natom; jj++){
+    //    aux1 =  cos(2*pi*d_rate*ii);
+    //    aux2 = -sin(2*pi*d_rate*ii);
+    //    exp_i=  aux1 + i_cmplx*aux2;
+    //    aux1 =  cos(2*pi*d_rate*jj);
+    //    aux2 =  sin(2*pi*d_rate*jj);
+    //    exp_j=  aux1 + i_cmplx*aux2;
+    //
+    //    if( ii != jj ){
+    //       rho[ii+jj*natom] = rho[ii+jj*natom] * exp_i * exp_j;
+    //    }
+    // }
+    // }
 
    warm_up_ph(ph_pop, at_list, phon_temp, natom);
-
 
    write_output(natom, n_bias, fock, rho, rho_OM, eigen_E, 0.0, currentA,
                 currentB, at_list, ph_pop, outfile);
@@ -134,14 +132,14 @@ int main(){
    for (int tt = 1; tt <= tot_time; tt++){
 
       dr_aux = d_rate;
-      V_aux  = 0.0e0; //0.0e0;
+      V_aux  = Vbias; //0.0e0;
       if (tt <= 1000){
          // dr_aux = d_rate * exp(-pow(((tt-1000)/250),2.0));
-         V_aux     = 0.5 * Vbias * (1.0 + cos(pi/1000 * tt));
+         V_aux     = 0.5 * Vbias * (1.0 - cos(pi/1000 * tt));
+         apply_potential(fock, at_list, V_aux, n_bias, natom);
       }
-      apply_potential(fock, at_list, V_aux, n_bias, natom);
       LVN_propagation(natom, fock, rho, Drho);
-      electron_phonon_correction(natom, at_list, tri_index, sigma, c_coup,
+      electron_phonon_correction(natom, n_bias, at_list, tri_index, sigma, c_coup,
                                     eta_term, lambda_term, eigen_E, ph_pop,
                                     Dphon_pop, eigen_coef, eigen_coefT, rho,
                                     Drho);
@@ -155,13 +153,13 @@ int main(){
       }
 
 
-      if (tt <= 1000){
-         V_aux     = 0.5 * Vbias * (1.0 + cos(pi/1000 * (tt+0.5)));
+      if ((tt+0.5) <= 1000){
+         V_aux     = 0.5 * Vbias * (1.0 - cos(pi/1000 * (tt+0.5)));
+         apply_potential(fock, at_list, V_aux, n_bias, natom);
       }
 
-      apply_potential(fock, at_list, V_aux, n_bias, natom);
       LVN_propagation(natom, fock, aux_mat1, Drho);
-      electron_phonon_correction(natom, at_list, tri_index, sigma, c_coup,
+      electron_phonon_correction(natom,n_bias,at_list, tri_index, sigma, c_coup,
                                     eta_term, lambda_term, eigen_E, aux_array1,
                                     Dphon_pop, eigen_coef, eigen_coefT,
                                     aux_mat1, Drho);

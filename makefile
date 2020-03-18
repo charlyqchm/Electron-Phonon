@@ -1,5 +1,5 @@
 CC := nvcc
-CFLAGS := -llapack -O3 -lcublas --gpu-architecture=sm_50
+CFLAGS := -llapack -O3 -lcublas --gpu-architecture=sm_61
 
 objects 	  = atom.o transport_e-ph_sub.o transport_e-ph.o matmul_cublas.o
 executable = myprogram
