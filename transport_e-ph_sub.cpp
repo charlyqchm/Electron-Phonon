@@ -24,7 +24,7 @@ void read_input(UNINT& natom, UNINT& n_bias, UNINT& n_move,
                 int& tot_time, int& print_t, double& delta_t, double& beta,
                 double& elec_temp, double& phon_temp, double& Vbias,
                 double& c_coup, double& sigma, double& d_rate, ifstream& inputf,
-                vector<int>& move_at){
+                vector<int>& move_at, double& mass, double& mean_freq){
 
    inputf.open("input");
 
@@ -55,6 +55,8 @@ void read_input(UNINT& natom, UNINT& n_bias, UNINT& n_move,
     inputf>> print_t;
     inputf>> delta_t;
     inputf>> beta;
+    inputf>> mass;
+    inputf>> mean_freq;
     inputf>> elec_temp;
     inputf>> phon_temp;
     inputf>> Vbias;
@@ -137,9 +139,9 @@ void write_output(UNINT natom, UNINT n_bias,vector<double>& fock,
 
 void atom_creator(vector<Atom>& at_list, UNINT n_bias,
                   UNINT natom, UNINT n_move,
-                  vector<int>& move_at){
+                  vector<int>& move_at, double& mass, double& mean_freq){
 
-   double mass  = 1822.8885*0.5;//23244.3;
+   //mass was 1822.8885*0.5;//23244.3;
    double Rcoor = -3.0;
    double R_min = (Rcoor * (natom-1))/2;
    double w_min = 0.001837466 , w_max = 0.00734987;
@@ -166,7 +168,7 @@ void atom_creator(vector<Atom>& at_list, UNINT n_bias,
       }
 
       freq = 0.0;
-      if(move){freq =0.00734987;}//n_rand * delta + w_min;}//0.004409919;
+      if(move){freq =mean_freq;}//n_rand * delta + w_min;}//0.004409919;
 
       Atom new_atom(ii, mass, Rcoor * ii - R_min, freq, Hii, move);
       at_list.push_back(new_atom);
@@ -597,21 +599,21 @@ void electron_phonon_correction(UNINT natom, UNINT n_bias,vector<Atom>& at_list,
 
 
 
-//   for (int ii=0; ii < nat2; ii++){
-//      Drho[ii] += aux_mat2[ii];
-//   }
+  for (int ii=0; ii < nat2; ii++){
+     Drho[ii] += aux_mat2[ii];
+  }
 
-   int lim_max = natom - n_bias + 100;
-   int lim_min = n_bias - 100;
-   for (int jj=lim_min; jj < lim_max; jj++){
-   for (int ii=lim_min; ii < lim_max; ii++){
-      Drho[ii+jj*natom] += aux_mat2[ii+jj*natom];
-   }
-   }
+   // int lim_max = natom - n_bias;
+   // int lim_min = n_bias;
+   // for (int jj=lim_min; jj < lim_max; jj++){
+   // for (int ii=lim_min; ii < lim_max; ii++){
+   //    Drho[ii+jj*natom] += aux_mat2[ii+jj*natom];
+   // }
+   // }
 
 //   for (int ii=0; ii < n_bias; ii++){
 //      Drho[ii+ii*natom] += aux_mat2[ii+ii*natom];
-//      Drho[(ii+n_bias+lim_max)+(ii+n_bias+lim_max)*natom] += 
+//      Drho[(ii+n_bias+lim_max)+(ii+n_bias+lim_max)*natom] +=
 //      aux_mat2[(ii+n_bias+lim_max)+(ii+n_bias+lim_max)*natom];
 //   }
 }

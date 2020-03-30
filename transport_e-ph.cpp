@@ -22,6 +22,8 @@ int main(){
    double                c_coup;
    double                sigma;
    double                d_rate;
+   double                mass;
+   double                mean_freq;
    double                dr_aux ;
    double                aux1;
    double                aux2;
@@ -32,7 +34,7 @@ int main(){
 
    read_input(natom, n_bias, n_move, tot_time, print_t, delta_t, beta,
               elec_temp, phon_temp, Vbias, c_coup, sigma, d_rate,inputf,
-              move_at);
+              move_at, mass, mean_freq);
 
    nat2 = natom * natom;
 
@@ -60,11 +62,11 @@ int main(){
    ofstream              outfile[output_tot];
 
    init_output(outfile);
-   atom_creator(at_list, n_bias, natom, n_move, move_at);
+   atom_creator(at_list, n_bias, natom, n_move, move_at, mass, mean_freq);
 
 //Preparing reference state/////////////////////////////////////////////////////
    hamiltonian_creator(fock, beta, at_list, natom, n_bias);
-   // apply_potential(fock, at_list, Vbias, n_bias, natom);
+   apply_potential(fock, at_list, Vbias, n_bias, natom);
    eigenval_elec_calc(fock, eigen_E, eigen_coef, natom);
    for(int jj=0; jj < natom; jj++){
    for(int ii=0; ii < natom; ii++){
@@ -90,7 +92,7 @@ int main(){
 
 //Preparing initial state///////////////////////////////////////////////////////
    hamiltonian_creator(fock, beta, at_list, natom, n_bias);
-   // apply_potential(fock, at_list, Vbias, n_bias, natom);
+   apply_potential(fock, at_list, Vbias, n_bias, natom);
    eigenval_elec_calc(fock, eigen_aux, aux_coef, natom);
    for(int jj=0; jj < natom; jj++){
    for(int ii=0; ii < natom; ii++){
@@ -132,10 +134,10 @@ int main(){
    for (int tt = 1; tt <= tot_time; tt++){
 
       dr_aux = d_rate;
-      V_aux  = Vbias; //0.0e0;
+      V_aux  = 0.0e0; //Vbias; //0.0e0;
       if (tt <= 1000){
          // dr_aux = d_rate * exp(-pow(((tt-1000)/250),2.0));
-         V_aux     = 0.5 * Vbias * (1.0 - cos(pi/1000 * tt));
+         V_aux     = 0.5 * Vbias * (1.0 + cos(pi/1000 * tt));
          apply_potential(fock, at_list, V_aux, n_bias, natom);
       }
       LVN_propagation(natom, fock, rho, Drho);
@@ -154,7 +156,7 @@ int main(){
 
 
       if ((tt+0.5) <= 1000){
-         V_aux     = 0.5 * Vbias * (1.0 - cos(pi/1000 * (tt+0.5)));
+         V_aux     = 0.5 * Vbias * (1.0 + cos(pi/1000 * (tt+0.5)));
          apply_potential(fock, at_list, V_aux, n_bias, natom);
       }
 
@@ -165,8 +167,8 @@ int main(){
                                     aux_mat1, Drho);
 
 
-      // apply_Driving_term(rho, rho_ref, Drho, dr_aux, natom, n_bias,
-      //                    currentA, currentB);
+      apply_Driving_term(rho, rho_ref, Drho, dr_aux, natom, n_bias,
+                         currentA, currentB);
 
       for(int ii=0; ii < nat2; ii++){
          rho_new[ii] = rho[ii] + Drho[ii] * delta_t;

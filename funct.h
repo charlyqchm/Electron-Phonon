@@ -19,7 +19,7 @@ void read_input(unsigned int& natom, unsigned int& n_bias, unsigned int& n_move,
                 int& tot_time, int& print_t, double& delta_t, double& beta,
                 double& elec_temp, double& phon_temp, double& Vbias,
                 double& c_coup, double& sigma, double& d_rate, ifstream& inputf,
-                vector<int>& move_at);
+                vector<int>& move_at, double& mass, double& mean_freq);
 
 void write_output(unsigned int natom, unsigned int n_bias,vector<double>& fock,
                   vector<complex<double> >& rho_AT, vector<complex<double> >& rho_OM,
@@ -29,7 +29,7 @@ void write_output(unsigned int natom, unsigned int n_bias,vector<double>& fock,
 
 void atom_creator(vector<Atom>& at_list, unsigned int n_bias,
                   unsigned int natom, unsigned int n_move,
-                  vector<int>& move_at);
+                  vector<int>& move_at, double& mass, double& mean_freq);
 
 void hamiltonian_creator(vector<double>& fock, double beta,
                          vector<Atom>& at_list, unsigned int natom,
