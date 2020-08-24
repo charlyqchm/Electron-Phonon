@@ -115,23 +115,23 @@ void write_output(UNINT natom, UNINT n_bias,vector<double>& fock,
       chargeM += real(rho_AT[ii+ii*natom]) - 0.5 ;
    }
 
-   outfile[0]<< tot_elec_E <<endl;
-   outfile[1]<< tot_elec <<endl;
-   outfile[4]<< time <<endl;
-   outfile[5]<< chargeA <<endl;
-   outfile[6]<< chargeB <<endl;
-   outfile[7]<< chargeM <<endl;
-   outfile[8]<< 2*currentA*1.6e-19*1e6/(2.419e-17) <<endl;
-   outfile[9]<< 2*currentB*1.6e-19*1e6/(2.419e-17) <<endl;
-   outfile[10]<< tot_phon_E <<endl;
-   outfile[11]<< tot_phon <<endl;
+   outfile[0]<< scientific << tot_elec_E <<endl;
+   outfile[1]<< scientific<< tot_elec <<endl;
+   outfile[4]<< scientific<< time <<endl;
+   outfile[5]<< scientific<< chargeA <<endl;
+   outfile[6]<< scientific<< chargeB <<endl;
+   outfile[7]<< scientific<< chargeM <<endl;
+   outfile[8]<< scientific<< 2*currentA*1.6e-19*1e6/(2.419e-17) <<endl;
+   outfile[9]<< scientific<< 2*currentB*1.6e-19*1e6/(2.419e-17) <<endl;
+   outfile[10]<< scientific<< tot_phon_E <<endl;
+   outfile[11]<< scientific<< tot_phon <<endl;
 
    for(int ii=0; ii<natom; ii++){
-      outfile[3]<<real(rho_OM[ii+ii*natom])<<endl;
-      outfile[13]<<ph_pop[ii]<<endl;
+      outfile[3]<< scientific<<real(rho_OM[ii+ii*natom])<<endl;
+      outfile[13]<< scientific<<ph_pop[ii]<<endl;
    }
 
-   outfile[15]<< dip_tot <<endl;
+   outfile[15]<< scientific<< dip_tot <<endl;
 
 }
 

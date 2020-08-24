@@ -134,9 +134,9 @@ int main(){
    for (int tt = 1; tt <= tot_time; tt++){
 
       dr_aux = d_rate;
-      V_aux  = 0.0e0; //Vbias; //0.0e0;
+      V_aux  = Vbias; //0.0e0;
       if (tt <= 1000){
-         // dr_aux = d_rate * exp(-pow(((tt-1000)/250),2.0));
+      //    // dr_aux = d_rate * exp(-pow(((tt-1000)/250),2.0));
          V_aux     = 0.5 * Vbias * (1.0 + cos(pi/1000 * tt));
          apply_potential(fock, at_list, V_aux, n_bias, natom);
       }
@@ -150,8 +150,8 @@ int main(){
          aux_mat1[ii] = rho[ii] + 0.5 * Drho[ii] * delta_t;
       }
       for(int ii=0; ii < natom; ii++){
-         // aux_array1[ii] = ph_pop[ii] + 0.5 * Dphon_pop[ii] * delta_t;
-         aux_array1[ii] = ph_pop[ii];
+         aux_array1[ii] = ph_pop[ii] + 0.5 * Dphon_pop[ii] * delta_t;
+         // aux_array1[ii] = ph_pop[ii];
       }
 
 
@@ -174,8 +174,8 @@ int main(){
          rho_new[ii] = rho[ii] + Drho[ii] * delta_t;
       }
       for(int ii=0; ii < natom; ii++){
-         // new_phon_pop[ii] = ph_pop[ii] + Dphon_pop[ii] * delta_t;
-         new_phon_pop[ii] = ph_pop[ii];
+         new_phon_pop[ii] = ph_pop[ii] + Dphon_pop[ii] * delta_t;
+         // new_phon_pop[ii] = ph_pop[ii];
       }
 
 
